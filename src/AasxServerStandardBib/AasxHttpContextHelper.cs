@@ -2767,7 +2767,7 @@ namespace AasxRestServerLibrary
                             Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
                         }
                         catch
-                        {   
+                        {
                             Console.WriteLine("Not Corret Signed by authenServer");
                             return null;
                         }
@@ -2779,10 +2779,10 @@ namespace AasxRestServerLibrary
                             int rightsCount = securityRightsName.Length;
 
                             for (int i = 0; i < rightsCount; i++)
-                            {   
+                            {
                                 if (user == securityRightsName[i])
-                                {   
-                                    Console.WriteLine("Found User:"+securityRightsName[i] + "  AccessLevel:"+securityRightsValue[i]);
+                                {
+                                    Console.WriteLine("Found User:" + securityRightsName[i] + "  AccessLevel:" + securityRightsValue[i]);
                                     accessrights = securityRightsValue[i];
                                     break;
                                 }

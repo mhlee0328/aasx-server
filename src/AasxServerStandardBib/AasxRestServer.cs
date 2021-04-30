@@ -238,11 +238,14 @@ namespace AasxRestServerLibrary
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/values(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/values/([^/]+)(/|)$")]
 
             public IHttpContext GetDiff(IHttpContext context)
             {
                 DateTime minimumDate = new DateTime();
                 bool updateOnly = false;
+                int seconds = 0;
+                string searchPath = "";
 
                 var queryString = context.Request.QueryString;
                 string refresh = queryString["refresh"];
@@ -252,11 +255,30 @@ namespace AasxRestServerLibrary
                     context.Response.Headers.Add("Refresh", refresh);
                 }
 
+                string auto = queryString["auto"];
+                if (auto != null && auto != "")
+                {
+                    try
+                    {
+                        seconds = Convert.ToInt32(auto);
+                        minimumDate = DateTime.Now - new TimeSpan(0, 0, seconds);
+                    }
+                    catch { }
+                }
+
                 string restPath = context.Request.PathInfo;
 
-                if (restPath == "/diff/values")
+                if (restPath.Contains("/diff/values"))
                 {
                     updateOnly = true;
+                    if (restPath.Contains("/diff/values/"))
+                    {
+                        try
+                        {
+                            searchPath = restPath.Substring("/diff/values/".Length);
+                        }
+                        catch { }
+                    }
                 }
                 else
                 {
@@ -315,8 +337,8 @@ namespace AasxRestServerLibrary
                                         if (diffTimeStamp > minimumDate)
                                         {
                                             foreach (var sme in sm.submodelElements)
-                                                diffText += checkDiff(modes[imode], sm.idShort + "/", sme.submodelElement,
-                                                    minimumDate, updateOnly);
+                                                diffText += checkDiff(modes[imode], sm.idShort + ".", sme.submodelElement,
+                                                    minimumDate, updateOnly, searchPath);
                                         }
                                     }
                                 }
@@ -335,7 +357,8 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            static string checkDiff(string mode, string path, AdminShell.SubmodelElement sme, DateTime minimumDate, bool updateOnly)
+            static string checkDiff(string mode, string path, AdminShell.SubmodelElement sme,
+                DateTime minimumDate, bool updateOnly, string searchPath)
             {
                 DateTime diffTimeStamp;
 
@@ -349,6 +372,11 @@ namespace AasxRestServerLibrary
                     {
                         if (mode == "CREATE" || sme.TimeStamp != sme.TimeStampCreate)
                         {
+                            if (searchPath != "")
+                            {
+                                if (!(path + sme.idShort).Contains(searchPath))
+                                    return "";
+                            }
                             string text = "<tr><td>" + mode + "</td><td><b>" + path + sme.idShort + "</b></td><td>SME</td><td>" +
                                 sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
                             if (updateOnly)
@@ -386,7 +414,8 @@ namespace AasxRestServerLibrary
                         {
                             string text = "";
                             foreach (var sme2 in smec.value)
-                                text += checkDiff(mode, path + sme.idShort + "/", sme2.submodelElement, minimumDate, updateOnly);
+                                text += checkDiff(mode, path + sme.idShort + ".", sme2.submodelElement,
+                                    minimumDate, updateOnly, searchPath);
                             return text;
                         }
 

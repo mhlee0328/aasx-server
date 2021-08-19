@@ -1920,7 +1920,7 @@ namespace AasxServer
             if (operation == null || inputCollection == null || outputProperty == null)
                 return false;
 
-            switch(operation.idShort)
+            switch (operation.idShort)
             {
                 case "length":
                     outputProperty.value = inputCollection.value.Count.ToString();

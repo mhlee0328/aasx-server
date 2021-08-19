@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path C:\\Development\\I40Language --connect  --name aorzelski.pxc --edit",
+      "commandLineArgs": "--rest --data-path C:\\Development\\I40Language --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

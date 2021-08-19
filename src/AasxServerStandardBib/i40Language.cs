@@ -442,6 +442,18 @@ namespace AasxServer
                                                     case "receiveI40message":
                                                         opResult = operation_receiveI40message(op, auto);
                                                         break;
+                                                    case "executeLogic":
+                                                        opResult = operation_executeLogic(op, auto);
+                                                        break;
+                                                    case "sendI40frame":
+                                                        opResult = operation_sendI40frame(op, auto);
+                                                        break;
+                                                    case "receiveI40frame":
+                                                        opResult = operation_receiveI40frame(op, auto);
+                                                        break;
+                                                    case "calculate":
+                                                        opResult = operation_calculate(op, auto);
+                                                        break;
                                                     default:
                                                         transitionsActive.Add(t.idShort);
                                                         break;
@@ -501,6 +513,18 @@ namespace AasxServer
                                                         break;
                                                     case "processRequesterResponse":
                                                         opResult = operation_processRequesterResponse(op, auto);
+                                                        break;
+                                                    case "executeLogic":
+                                                        opResult = operation_executeLogic(op, auto);
+                                                        break;
+                                                    case "sendI40frame":
+                                                        opResult = operation_sendI40frame(op, auto);
+                                                        break;
+                                                    case "receiveI40frame":
+                                                        opResult = operation_receiveI40frame(op, auto);
+                                                        break;
+                                                    case "calculate":
+                                                        opResult = operation_calculate(op, auto);
                                                         break;
                                                 }
                                             }
@@ -1444,12 +1468,14 @@ namespace AasxServer
                 int i = 0; // set breakpoint here to debug specific automaton
             }
 
-            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 0)
+            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 0)
             {
                 return false;
             }
 
             AdminShell.Property checkType = null;
+            AdminShell.Property argument1 = null;
+            AdminShell.Property argument2 = null;
             AdminShell.SubmodelElementCollection refCollection = null;
             AdminShell.Property refProperty = null;
             int count = 0;
@@ -1460,25 +1486,34 @@ namespace AasxServer
                 var inputRef = input.value.submodelElement;
                 if (inputRef is AdminShell.Property)
                 {
-                    checkType = (inputRef as AdminShell.Property);
+                    if (count == 0)
+                        checkType = (inputRef as AdminShell.Property);
+                    if (count == 1)
+                        argument1 = (inputRef as AdminShell.Property);
+                    if (count == 2)
+                        argument2 = (inputRef as AdminShell.Property);
+                    count++;
                     continue;
                 }
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
-                if (refElement is AdminShell.SubmodelElementCollection)
-                {
-                    refCollection = refElement as AdminShell.SubmodelElementCollection;
-                    count = refCollection.value.Count;
-                }
                 if (refElement is AdminShell.Property)
                 {
                     refProperty = refElement as AdminShell.Property;
-                    value = refProperty.value;
+                    if (count == 1)
+                        argument1 = (refProperty as AdminShell.Property);
+                    if (count == 2)
+                        argument2 = (refProperty as AdminShell.Property);
                 }
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+                }
+                count++;
             }
 
-            if (checkType == null || (refCollection == null && refProperty == null))
+            if (checkType == null || argument1 == null || argument2 == null)
                 return false;
 
             switch (checkType.idShort)
@@ -1486,23 +1521,410 @@ namespace AasxServer
                 case "isEmpty":
                     if (refCollection != null)
                         return (count == 0);
-                    if (refProperty != null)
+                    if (argument1 != null)
                         return (value == "");
                     return false;
                 case "isNotEmpty":
                     if (refCollection != null)
                         return (count != 0);
-                    if (refProperty != null)
+                    if (argument1 != null)
                         return (value != "");
                     return false;
                 case "isEqual":
-                    if (refProperty != null)
-                        return (value == checkType.value);
-                    return false;
+                    return (argument1.value == argument2.value);
                 case "isNotEqual":
-                    if (refProperty != null)
-                        return (value != checkType.value);
+                    return (argument1.value != argument2.value);
+            }
+
+            return false;
+        }
+
+        public static bool operation_executeLogic(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // parameter sequence
+            // inputVariable property i40logic type: 1
+            // inputVariable reference property protocol type: 1
+            // inputVariable reference collection frame(s): 1..2
+            // inputVariable reference collection inputQueue: 1
+            // inputVariable reference submodel submodel: 0..1
+            // outputVariable reference collection outputQueue(s): 0..2
+
+            // alternative 1
+            // inputVariable property i40Logic = callForProposal
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameProposal
+            // inputVariable reference submodel proposal
+            // outputVariable reference collection queueProposal
+
+            // alternative 2
+            // inputVariable property i40Logic = evaluateProposal
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameAcceptProposal
+            // inputVariable reference collection frameRejectProposal
+            // inputVariable reference collection queueProposal
+            // outputVariable reference collection queueAcceptProposal
+            // outputVariable reference collection queueRejectProposal
+
+            // alternative 3
+            // inputVariable property i40Logic = evaluateInformConfirm
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameInformConfirm
+            // inputVariable reference collection queueInformConfirm
+
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
+            if (op.inputVariable.Count < 4 && op.outputVariable.Count > 2)
+            {
+                return false;
+            }
+
+            // inputVariable property i40logic type: 1
+            // inputVariable reference property protocol type: 1
+            // inputVariable reference collection frame(s): 1..2
+            // inputVariable reference collection inputQueue: 1
+            // inputVariable reference submodel submodel: 0..1
+            // outputVariable reference collection outputQueue(s): 0..2
+            AdminShell.Property i40Logic = null;
+            AdminShell.Property protocol = null;
+            AdminShell.SubmodelElementCollection frame1 = null;
+            AdminShell.SubmodelElementCollection frame2 = null;
+            AdminShell.SubmodelElementCollection inQueue = null;
+            AdminShell.Submodel sub = null;
+            AdminShell.SubmodelElementCollection outQueue1 = null;
+            AdminShell.SubmodelElementCollection outQueue2 = null;
+
+            AdminShell.SubmodelElementCollection refCollection = null;
+            AdminShell.Property refProperty = null;
+
+            string state = "i40logic";
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property p)
+                {
+                    switch (p.idShort)
+                    {
+                        case "i40Logic":
+                            i40Logic = p;
+                            state = "protocol";
+                            break;
+                    }
+                    continue;
+                }
+
+                if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property)
+                {
+                    refProperty = refElement as AdminShell.Property;
+                    switch (refProperty.idShort)
+                    {
+                        case "protocol":
+                            protocol = refProperty;
+                            state = "frame1";
+                            break;
+                    }
+                    continue;
+                }
+                if (refElement is AdminShell.Submodel)
+                {
+                    if (state == "submodel")
+                    {
+                        sub = refElement as AdminShell.Submodel;
+                        state = "outQueue1";
+                    }
+                    continue;
+                }
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+                    switch (i40Logic?.value)
+                    {
+                        case "callForProposal":
+                            switch (state)
+                            {
+                                case "frame1":
+                                    frame1 = refCollection;
+                                    state = "submodel";
+                                    break;
+                                case "outQueue1":
+                                    outQueue1 = refCollection;
+                                    state = "";
+                                    break;
+                            }
+                            break;
+                        case "evaluateProposal":
+                            switch (state)
+                            {
+                                case "frame1":
+                                    frame1 = refCollection;
+                                    state = "frame2";
+                                    break;
+                                case "frame2":
+                                    frame2 = refCollection;
+                                    state = "inQueue";
+                                    break;
+                                case "inQueue":
+                                    inQueue = refCollection;
+                                    state = "outQueue1";
+                                    break;
+                            }
+                            break;
+                        case "evaluateInformConfirm":
+                            switch (state)
+                            {
+                                case "frame1":
+                                    frame1 = refCollection;
+                                    state = "inQueue";
+                                    break;
+                                case "inQueue":
+                                    inQueue = refCollection;
+                                    state = "";
+                                    break;
+                            }
+                            break;
+                    }
+                    continue;
+                }
+            }
+
+            foreach (var output in op.outputVariable)
+            {
+                var outputRef = output.value.submodelElement;
+
+                if (!(outputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+                    switch (i40Logic?.value)
+                    {
+                        case "callForProposal":
+                            switch (state)
+                            {
+                                case "outQueue1":
+                                    outQueue1 = refCollection;
+                                    state = "";
+                                    break;
+                            }
+                            break;
+                        case "evaluateProposal":
+                            switch (state)
+                            {
+                                case "outQueue1":
+                                    outQueue1 = refCollection;
+                                    state = "outQueue2";
+                                    break;
+                                case "outQueue2":
+                                    outQueue2 = refCollection;
+                                    state = "";
+                                    break;
+                            }
+                            break;
+                    }
+                    continue;
+                }
+            }
+
+            // Execute operation
+            switch (i40Logic?.value)
+            {
+                case "callForProposal":
+                    // Harish, please add correct code here
+                    AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
+                    smcSubmodel.idShort = "callForProposal";
+                    foreach (var sme in sub.submodelElements)
+                    {
+                        smcSubmodel.Add(sme.submodelElement);
+                        treeChanged = true;
+                    }
+                    outQueue1.Add(smcSubmodel);
+                    break;
+                case "evaluateProposal":
+                    // Harish, please add correct code here
+                    foreach (var sme in inQueue.value)
+                    {
+                        outQueue1.Add(sme.submodelElement);
+                        treeChanged = true;
+                    }
+                    break;
+                case "evaluateInformConfirm":
+                    break;
+            }
+
+            return false;
+        }
+
+        public static string i40frame = "";
+
+        public static bool operation_sendI40frame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // inputVariable reference property protocol
+            // inputVariable reference collection outputQueue
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
+            if (op.inputVariable.Count != 2)
+            {
+                return false;
+            }
+
+            AdminShell.Property protocol = null;
+            AdminShell.SubmodelElementCollection outQueue = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+
+                if (!(inputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property p)
+                {
+                    protocol = p;
+                    continue;
+                }
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    outQueue = refElement as AdminShell.SubmodelElementCollection;
+                    continue;
+                }
+            }
+
+            if (protocol != null & outQueue != null)
+            {
+                // Harish, please add correct code here
+                i40frame = JsonConvert.SerializeObject(outQueue, Newtonsoft.Json.Formatting.Indented);
+            }
+
+            return false;
+        }
+
+        public static bool operation_receiveI40frame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // inputVariable reference property protocol
+            // inputVariable reference collection inputQueue
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
+            if (op.inputVariable.Count != 2)
+            {
+                return false;
+            }
+
+            AdminShell.Property protocol = null;
+            AdminShell.SubmodelElementCollection inQueue = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+
+                if (!(inputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property p)
+                {
+                    protocol = p;
+                    continue;
+                }
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    inQueue = refElement as AdminShell.SubmodelElementCollection;
+                    continue;
+                }
+            }
+
+            if (protocol != null & inQueue != null)
+            {
+                // Harish, please add correct code here
+
+                AdminShell.SubmodelElementCollection smc = null;
+                try
+                {
+                    smc = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>
+                        (i40frame, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                    foreach (var sme in smc.value)
+                    {
+                        inQueue.Add(sme.submodelElement);
+                        treeChanged = true;
+                    }
+                }
+                catch
+                { }
+            }
+
+            return false;
+        }
+        public static bool operation_calculate(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // inputVariable property checkType: isEmpty, isNotEmpty;
+            // inputVariable reference collection proposal
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
+            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 1)
+            {
+                return false;
+            }
+
+            AdminShell.Property operation = null;
+            AdminShell.SubmodelElementCollection inputCollection = null;
+            AdminShell.Property outputProperty = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    operation = (inputRef as AdminShell.Property);
+                    continue;
+                }
+                if (!(inputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    inputCollection = refElement as AdminShell.SubmodelElementCollection;
+                }
+            }
+
+            foreach (var output in op.outputVariable)
+            {
+                var outputRef = output.value.submodelElement;
+                if (!(outputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property)
+                {
+                    outputProperty = (refElement as AdminShell.Property);
+                    continue;
+                }
+            }
+
+            if (operation == null || inputCollection == null || outputProperty == null)
+                return false;
+
+            switch(operation.idShort)
+            {
+                case "length":
+                    outputProperty.value = inputCollection.value.Count.ToString();
+                    break;
             }
 
             return false;

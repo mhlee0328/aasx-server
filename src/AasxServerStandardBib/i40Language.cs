@@ -255,8 +255,8 @@ namespace AasxServer
         static bool treeChanged = false;
 
         //        public static string debugAutomaton = "";
-        public static string debugAutomaton = "automatonServiceRequester";
-        //        public static string debugAutomaton = "automatonServiceProvider";
+        // public static string debugAutomaton = "automatonServiceRequester";
+        public static string debugAutomaton = "automatonServiceProvider";
         public static void nextTick()
         {
             while (true)
@@ -1546,7 +1546,8 @@ namespace AasxServer
             // inputVariable reference property protocol type: 1
             // inputVariable reference collection frame(s): 1..2
             // inputVariable reference collection inputQueue: 1
-            // inputVariable reference submodel submodel: 0..1
+            // inputVariable reference submodel sub: 0..1
+            // inputVariable reference property message: 0..1
             // outputVariable reference collection outputQueue(s): 0..2
 
             // alternative 1
@@ -1571,6 +1572,13 @@ namespace AasxServer
             // inputVariable reference collection frameInformConfirm
             // inputVariable reference collection queueInformConfirm
 
+            // alternative 4
+            // inputVariable property i40Logic = capabiltyCheck
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameNotUnderstood
+            // inputVariable reference property proposalMessage
+            // outputVariable reference collection queueNotUnderstood
+
 
             if (auto.name == debugAutomaton)
             {
@@ -1586,7 +1594,8 @@ namespace AasxServer
             // inputVariable reference property protocol type: 1
             // inputVariable reference collection frame(s): 1..2
             // inputVariable reference collection inputQueue: 1
-            // inputVariable reference submodel submodel: 0..1
+            // inputVariable reference submodel sub: 0..1
+            // inputVariable reference property message: 0..1
             // outputVariable reference collection outputQueue(s): 0..2
             AdminShell.Property i40Logic = null;
             AdminShell.Property protocol = null;
@@ -1594,6 +1603,7 @@ namespace AasxServer
             AdminShell.SubmodelElementCollection frame2 = null;
             AdminShell.SubmodelElementCollection inQueue = null;
             AdminShell.Submodel sub = null;
+            AdminShell.Property proposalMessage = null;
             AdminShell.SubmodelElementCollection outQueue1 = null;
             AdminShell.SubmodelElementCollection outQueue2 = null;
 
@@ -1628,6 +1638,10 @@ namespace AasxServer
                         case "protocol":
                             protocol = refProperty;
                             state = "frame1";
+                            break;
+                        case "proposalMessage":
+                            proposalMessage = refProperty;
+                            state = "outQueue1";
                             break;
                     }
                     continue;
@@ -1689,6 +1703,15 @@ namespace AasxServer
                                     break;
                             }
                             break;
+                        case "capabilityCheck":
+                            switch (state)
+                            {
+                                case "frame1":
+                                    frame1 = refCollection;
+                                    state = "message";
+                                    break;
+                            }
+                            break;
                     }
                     continue;
                 }
@@ -1707,6 +1730,7 @@ namespace AasxServer
                     switch (i40Logic?.value)
                     {
                         case "callForProposal":
+                        case "capabilityCheck":
                             switch (state)
                             {
                                 case "outQueue1":
@@ -1746,7 +1770,7 @@ namespace AasxServer
                         treeChanged = true;
                     }
                     outQueue1.Add(smcSubmodel);
-                    break;
+                    return true;
                 case "evaluateProposal":
                     // Harish, please add correct code here
                     foreach (var sme in inQueue.value)
@@ -1754,15 +1778,60 @@ namespace AasxServer
                         outQueue1.Add(sme.submodelElement);
                         treeChanged = true;
                     }
-                    break;
+                    return true;
                 case "evaluateInformConfirm":
-                    break;
+                    return true;
+                case "capabilityCheck":
+                    return true;
             }
 
             return false;
         }
 
-        public static string i40frame = "";
+        public static List<string> i40frameRequesterSendBuffer = new List<string>();
+        public static List<string> i40frameProviderSendBuffer = new List<string>();
+
+        static void i40frameSend(string message, string protocol, i40LanguageAutomaton auto)
+        {
+            if (protocol == "memory")
+            {
+                if (auto.name == "automatonServiceRequester")
+                {
+                    i40frameRequesterSendBuffer.Add(message);
+                }
+                if (auto.name == "automatonServiceProvider")
+                {
+                    i40frameProviderSendBuffer.Add(message);
+                }
+            }
+        }
+
+        static string i40frameReceive(string protocol, i40LanguageAutomaton auto)
+        {
+            string message = "";
+
+            if (protocol == "memory")
+            {
+                if (auto.name == "automatonServiceRequester")
+                {
+                    if (i40frameProviderSendBuffer.Count > 0)
+                    {
+                        message = i40frameProviderSendBuffer[0];
+                        i40frameProviderSendBuffer.RemoveAt(0);
+                    }
+                }
+                if (auto.name == "automatonServiceProvider")
+                {
+                    if (i40frameRequesterSendBuffer.Count > 0)
+                    {
+                        message = i40frameRequesterSendBuffer[0];
+                        i40frameRequesterSendBuffer.RemoveAt(0);
+                    }
+                }
+            }
+
+            return message;
+        }
 
         public static bool operation_sendI40frame(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
@@ -1804,7 +1873,7 @@ namespace AasxServer
             if (protocol != null & outQueue != null)
             {
                 // Harish, please add correct code here
-                i40frame = JsonConvert.SerializeObject(outQueue, Newtonsoft.Json.Formatting.Indented);
+                i40frameSend(JsonConvert.SerializeObject(outQueue, Newtonsoft.Json.Formatting.Indented), protocol.value, auto);
             }
 
             return false;
@@ -1855,11 +1924,14 @@ namespace AasxServer
                 try
                 {
                     smc = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>
-                        (i40frame, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                    foreach (var sme in smc.value)
+                        (i40frameReceive(protocol.value, auto), new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                    if (smc != null)
                     {
-                        inQueue.Add(sme.submodelElement);
-                        treeChanged = true;
+                        foreach (var sme in smc.value)
+                        {
+                            inQueue.Add(sme.submodelElement);
+                            treeChanged = true;
+                        }
                     }
                 }
                 catch
@@ -1924,6 +1996,10 @@ namespace AasxServer
             {
                 case "length":
                     outputProperty.value = inputCollection.value.Count.ToString();
+                    break;
+                case "getfirst":
+                    outputProperty.value = inputCollection.value[0].submodelElement.ValueAsText();
+                    inputCollection.value.RemoveAt(0);
                     break;
             }
 

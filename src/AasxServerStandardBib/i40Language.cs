@@ -1576,9 +1576,45 @@ namespace AasxServer
             // inputVariable property i40Logic = capabiltyCheck
             // inputVariable reference property protocol
             // inputVariable reference collection frameNotUnderstood
+            // inputVariable reference collection queueProposal
             // inputVariable reference property proposalMessage
             // outputVariable reference collection queueNotUnderstood
 
+            // alternative 5
+            // inputVariable property i40Logic = feasibilityCheck
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameRefuse
+            // inputVariable reference property proposalMessage
+            // outputVariable reference collection queueRefuseProposal
+
+            // alternative 6
+            // inputVariable property i40Logic = checkingSchedule
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameRefuse
+            // inputVariable reference property proposalMessage
+            // outputVariable reference collection queueRefuseProposal
+
+            // alternative 7
+            // inputVariable property i40Logic = PriceCalculation
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameProposal
+            // inputVariable reference property proposalMessage
+            // outputVariable reference collection queueProposal
+
+            // alternative 8
+            // inputVariable property i40Logic = WaitingForServiceRequesterAnswer
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameAcceptProposal
+            // inputVariable reference collection frameRejectProposal
+            // inputVariable reference collection queueSRAnswer
+            // outputVariable reference collection queueAcceptProposal
+            // outputVariable reference collection queueRejectProposal
+
+            // alternative 9
+            // inputVariable property i40Logic = ServiceProvision
+            // inputVariable reference property protocol
+            // inputVariable reference collection frameInfomrConfirm
+            // outputVariable reference collection queueInfomrConfirm
 
             if (auto.name == debugAutomaton)
             {
@@ -1603,7 +1639,7 @@ namespace AasxServer
             AdminShell.SubmodelElementCollection frame2 = null;
             AdminShell.SubmodelElementCollection inQueue = null;
             AdminShell.Submodel sub = null;
-            AdminShell.Property proposalMessage = null;
+            AdminShell.SubmodelElementCollection proposalMessage = null;
             AdminShell.SubmodelElementCollection outQueue1 = null;
             AdminShell.SubmodelElementCollection outQueue2 = null;
 
@@ -1624,6 +1660,28 @@ namespace AasxServer
                             state = "protocol";
                             break;
                     }
+                    // Debug
+                    switch (i40Logic?.value)
+                    {
+                        case "callForProposal":
+                            break;
+                        case "evaluateProposal":
+                            break;
+                        case "evaluateInformConfirm":
+                            break;
+                        case "capabilityCheck":
+                            break;
+                        case "feasibilityCheck":
+                            break;
+                        case "checkingSchedule":
+                            break;
+                        case "PriceCalculation":
+                            break;
+                        case "ServiceProvision":
+                            break;
+                        case "WaitingForServiceRequesterAnswer":
+                            break;
+                    }
                     continue;
                 }
 
@@ -1638,10 +1696,6 @@ namespace AasxServer
                         case "protocol":
                             protocol = refProperty;
                             state = "frame1";
-                            break;
-                        case "proposalMessage":
-                            proposalMessage = refProperty;
-                            state = "outQueue1";
                             break;
                     }
                     continue;
@@ -1658,6 +1712,13 @@ namespace AasxServer
                 if (refElement is AdminShell.SubmodelElementCollection)
                 {
                     refCollection = refElement as AdminShell.SubmodelElementCollection;
+                    if (refCollection.idShort == "proposalMessage")
+                    {
+                        proposalMessage = refCollection;
+                        state = "outQueue1";
+                        continue;
+                    }
+
                     switch (i40Logic?.value)
                     {
                         case "callForProposal":
@@ -1674,6 +1735,7 @@ namespace AasxServer
                             }
                             break;
                         case "evaluateProposal":
+                        case "WaitingForServiceRequesterAnswer":
                             switch (state)
                             {
                                 case "frame1":
@@ -1691,6 +1753,8 @@ namespace AasxServer
                             }
                             break;
                         case "evaluateInformConfirm":
+                        case "ServiceProvision":
+                        case "capabilityCheck":
                             switch (state)
                             {
                                 case "frame1":
@@ -1703,7 +1767,9 @@ namespace AasxServer
                                     break;
                             }
                             break;
-                        case "capabilityCheck":
+                        case "feasibilityCheck":
+                        case "checkingSchedule":
+                        case "PriceCalculation":
                             switch (state)
                             {
                                 case "frame1":
@@ -1731,6 +1797,9 @@ namespace AasxServer
                     {
                         case "callForProposal":
                         case "capabilityCheck":
+                        case "feasibilityCheck":
+                        case "checkingSchedule":
+                        case "PriceCalculation":
                             switch (state)
                             {
                                 case "outQueue1":
@@ -1740,6 +1809,7 @@ namespace AasxServer
                             }
                             break;
                         case "evaluateProposal":
+                        case "WaitingForServiceRequesterAnswer":
                             switch (state)
                             {
                                 case "outQueue1":
@@ -1758,11 +1828,13 @@ namespace AasxServer
             }
 
             // Execute operation
+            AdminShell.SubmodelElementCollection smcSubmodel = null;
+
             switch (i40Logic?.value)
             {
                 case "callForProposal":
                     // Harish, please add correct code here
-                    AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
+                    smcSubmodel = new AdminShell.SubmodelElementCollection();
                     smcSubmodel.idShort = "callForProposal";
                     foreach (var sme in sub.submodelElements)
                     {
@@ -1776,12 +1848,24 @@ namespace AasxServer
                     foreach (var sme in inQueue.value)
                     {
                         outQueue1.Add(sme.submodelElement);
-                        treeChanged = true;
                     }
+                    treeChanged = true;
                     return true;
                 case "evaluateInformConfirm":
                     return true;
                 case "capabilityCheck":
+                    return true;
+                case "feasibilityCheck":
+                    return true;
+                case "checkingSchedule":
+                    return true;
+                case "PriceCalculation":
+                    outQueue1.Add(proposalMessage);
+                    treeChanged = true;
+                    return true;
+                case "ServiceProvision":
+                    return true;
+                case "WaitingForServiceRequesterAnswer":
                     return true;
             }
 
@@ -1958,6 +2042,7 @@ namespace AasxServer
             AdminShell.Property operation = null;
             AdminShell.SubmodelElementCollection inputCollection = null;
             AdminShell.Property outputProperty = null;
+            AdminShell.SubmodelElementCollection outputCollection = null;
 
             foreach (var input in op.inputVariable)
             {
@@ -1987,9 +2072,14 @@ namespace AasxServer
                     outputProperty = (refElement as AdminShell.Property);
                     continue;
                 }
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    outputCollection = (refElement as AdminShell.SubmodelElementCollection);
+                    continue;
+                }
             }
 
-            if (operation == null || inputCollection == null || outputProperty == null)
+            if (operation == null || inputCollection == null || (outputProperty == null && outputCollection == null))
                 return false;
 
             switch (operation.idShort)
@@ -1997,8 +2087,13 @@ namespace AasxServer
                 case "length":
                     outputProperty.value = inputCollection.value.Count.ToString();
                     break;
-                case "getfirst":
-                    outputProperty.value = inputCollection.value[0].submodelElement.ValueAsText();
+                case "getFirst":
+                    if (outputProperty != null)
+                        outputProperty.value = inputCollection.value[0].submodelElement.ValueAsText();
+                    if (outputCollection != null)
+                    {
+                        outputCollection.Add(inputCollection.value[0].submodelElement);
+                    }
                     inputCollection.value.RemoveAt(0);
                     break;
             }

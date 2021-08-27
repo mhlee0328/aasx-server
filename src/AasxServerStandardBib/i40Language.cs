@@ -280,6 +280,14 @@ namespace AasxServer
                         {
                             auto.setMode = (sme1 as AdminShell.Property).value;
                         }
+                        if (sme1 is AdminShell.Property && sme1.idShort == "stopAtStates")
+                        {
+                            string stopAtStates = (sme1 as AdminShell.Property).value;
+                            string[] states = stopAtStates.Split(' ');
+                            foreach (var s in states)
+                                if (auto.actualStates.Contains(s))
+                                    auto.setMode = "stop";
+                        }
                         if (sme1 is AdminShell.Property && sme1.idShort == "setForcedStates")
                         {
                             auto.setForcedStates = (sme1 as AdminShell.Property).value;

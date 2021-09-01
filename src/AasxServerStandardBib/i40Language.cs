@@ -255,8 +255,8 @@ namespace AasxServer
         static bool treeChanged = false;
 
         //        public static string debugAutomaton = "";
-        // public static string debugAutomaton = "automatonServiceRequester";
-        public static string debugAutomaton = "automatonServiceProvider";
+        public static string debugAutomaton = "automatonServiceRequester";
+        // public static string debugAutomaton = "automatonServiceProvider";
         public static void nextTick()
         {
             while (true)
@@ -1761,7 +1761,6 @@ namespace AasxServer
                             }
                             break;
                         case "evaluateInformConfirm":
-                        case "ServiceProvision":
                         case "capabilityCheck":
                             switch (state)
                             {
@@ -1786,6 +1785,10 @@ namespace AasxServer
                                     break;
                             }
                             break;
+                        case "ServiceProvision":
+                            inQueue = refCollection;
+                            state = "outQueue1";
+                            break;
                     }
                     continue;
                 }
@@ -1808,6 +1811,7 @@ namespace AasxServer
                         case "feasibilityCheck":
                         case "checkingSchedule":
                         case "PriceCalculation":
+                        case "ServiceProvision":
                             switch (state)
                             {
                                 case "outQueue1":
@@ -1852,12 +1856,22 @@ namespace AasxServer
                     outQueue1.Add(smcSubmodel);
                     return true;
                 case "evaluateProposal":
-                    // Harish, please add correct code here
+                case "WaitingForServiceRequesterAnswer":
+                   // Harish, please add correct code here
                     foreach (var sme in inQueue.value)
                     {
                         outQueue1.Add(sme.submodelElement);
                     }
+                    inQueue.value.Clear();
                     treeChanged = true;
+                    return true;
+                case "ServiceProvision":
+                    if (inQueue.value.Count != 0)
+                    {
+                        outQueue1.Add(inQueue);
+                        inQueue.value.Clear();
+                        treeChanged = true;
+                    }
                     return true;
                 case "evaluateInformConfirm":
                     return true;
@@ -1870,10 +1884,6 @@ namespace AasxServer
                 case "PriceCalculation":
                     outQueue1.Add(proposalMessage);
                     treeChanged = true;
-                    return true;
-                case "ServiceProvision":
-                    return true;
-                case "WaitingForServiceRequesterAnswer":
                     return true;
             }
 

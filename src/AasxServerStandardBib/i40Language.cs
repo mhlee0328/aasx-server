@@ -255,8 +255,8 @@ namespace AasxServer
         static bool treeChanged = false;
 
         //        public static string debugAutomaton = "";
-        public static string debugAutomaton = "automatonServiceRequester";
-        // public static string debugAutomaton = "automatonServiceProvider";
+        // public static string debugAutomaton = "automatonServiceRequester";
+        public static string debugAutomaton = "automatonServiceProvider";
         public static void nextTick()
         {
             while (true)
@@ -706,6 +706,8 @@ namespace AasxServer
             if (!(r1 is AdminShell.ReferenceElement))
                 return false;
             var ref1 = Program.env[0].AasEnv.FindReferableByReference((r1 as AdminShell.ReferenceElement).value);
+            if (ref1 == null)
+                auto.getErrors += r1.idShort + " not found! ";
             if (!(ref1 is AdminShell.Property))
                 return false;
             var p1 = ref1 as AdminShell.Property;
@@ -716,6 +718,8 @@ namespace AasxServer
             if (!(r2 is AdminShell.ReferenceElement))
                 return false;
             var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as AdminShell.ReferenceElement).value);
+            if (ref2 == null)
+                auto.getErrors += r2.idShort + " not found! ";
             if (!(ref2 is AdminShell.Property))
                 return false;
             var p2 = ref2 as AdminShell.Property;
@@ -776,6 +780,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Submodel)
                     refSubmodel = refElement as AdminShell.Submodel;
             }
@@ -785,6 +791,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property)
                     receivedFrameJSON = refElement as AdminShell.Property;
             }
@@ -794,6 +802,8 @@ namespace AasxServer
             if (!(r2 is AdminShell.ReferenceElement))
                 return false;
             var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as AdminShell.ReferenceElement).value);
+            if (ref2 == null)
+                auto.getErrors += r2.idShort + " not found! ";
             if (!(ref2 is AdminShell.SubmodelElementCollection))
                 return false;
             var smc2 = ref2 as AdminShell.SubmodelElementCollection;
@@ -908,6 +918,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property p)
                 {
                     if (p.idShort == "protocol")
@@ -927,6 +939,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.SubmodelElementCollection smc)
                     refProposals = smc;
                 if (refElement is AdminShell.Property p)
@@ -1133,6 +1147,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.SubmodelElementCollection)
                     refFrame = refElement as AdminShell.SubmodelElementCollection;
                 if (refElement is AdminShell.Submodel)
@@ -1145,6 +1161,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property)
                     sendFrameJSON = refElement as AdminShell.Property;
             }
@@ -1240,6 +1258,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property p)
                 {
                     if (p.idShort == "protocol")
@@ -1259,6 +1279,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property p)
                 {
                     sendFrameJSON = refElement as AdminShell.Property;
@@ -1396,6 +1418,8 @@ namespace AasxServer
                 if (outputRef is AdminShell.ReferenceElement)
                 {
                     var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                    if (refElement == null)
+                        auto.getErrors += outputRef.idShort + " not found! ";
                     if (refElement is AdminShell.SubmodelElementCollection)
                     {
                         var refSMEC = refElement as AdminShell.SubmodelElementCollection;
@@ -1449,6 +1473,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.SubmodelElementCollection)
                     refCollection = refElement as AdminShell.SubmodelElementCollection;
             }
@@ -1506,6 +1532,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property)
                 {
                     refProperty = refElement as AdminShell.Property;
@@ -1696,6 +1724,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property)
                 {
                     refProperty = refElement as AdminShell.Property;
@@ -1801,6 +1831,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.SubmodelElementCollection)
                 {
                     refCollection = refElement as AdminShell.SubmodelElementCollection;
@@ -1960,6 +1992,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property p)
                 {
                     protocol = p;
@@ -2006,6 +2040,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property p)
                 {
                     protocol = p;
@@ -2073,6 +2109,8 @@ namespace AasxServer
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += inputRef.idShort + " not found! ";
                 if (refElement is AdminShell.SubmodelElementCollection)
                 {
                     inputCollection = refElement as AdminShell.SubmodelElementCollection;
@@ -2085,6 +2123,8 @@ namespace AasxServer
                 if (!(outputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement == null)
+                    auto.getErrors += outputRef.idShort + " not found! ";
                 if (refElement is AdminShell.Property)
                 {
                     outputProperty = (refElement as AdminShell.Property);
